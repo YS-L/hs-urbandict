@@ -28,12 +28,16 @@ defaultDefinition = Definition { defid = ""
                                , down = -1
                                }
 
+matchAttribute :: String -> String -> Tag String -> Bool
 matchAttribute attr val tag = isTagOpen tag && fromAttrib attr tag == val
 
+isDefPanel :: Tag String -> Bool
 isDefPanel = matchAttribute "class" "def-panel"
 
+splitDefPanels :: [Tag String] -> [[Tag String]]
 splitDefPanels = tail . split (keepDelimsL $ whenElt isDefPanel)
 
+parsePanel :: [Tag String] -> Definition
 parsePanel tags = foldr fill defaultDefinition $ zip tags (tail tags)
   where
     fill (tag1, tag2) def
@@ -50,6 +54,7 @@ parsePanel tags = foldr fill defaultDefinition $ zip tags (tail tags)
               _  -> def { up = val}
               where val = read (innerText [tag]) :: Int
 
+extractDefinitions :: String -> [Definition]
 extractDefinitions src = removeEmpty records
   where
     panels = splitDefPanels $ parseTags src
