@@ -7,7 +7,7 @@ test1 = TestCase (do src <- readFile "test/data/apple.html"
                      let firstDef = head defs
                      assertEqual "Word should be apple" "apple" (word firstDef))
 
-firstAppleDefinition = Definition { defid = "1582300"
+firstAppleDefinition = Definition { defid = 1582300
                                   , word = "apple"
                                   , meaning = "The alternative to the orange."
                                   , example = "Today, I do not wish to consume an apple.  I shall seek alternative fruits."
