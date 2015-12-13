@@ -2,6 +2,7 @@ module Lib
     ( someFunc
     , extractDefinitions
     , Definition (..)
+    , defaultDefinition
     ) where
 
 import           Data.Char         (isDigit)
@@ -17,7 +18,7 @@ data Definition = Definition { defid   :: String
                              , author  :: String
                              , up      :: Int
                              , down    :: Int
-                             } deriving (Show)
+                             } deriving (Show, Eq)
 
 defaultDefinition = Definition { defid = ""
                                , word = ""
