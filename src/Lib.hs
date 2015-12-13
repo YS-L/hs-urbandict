@@ -10,7 +10,7 @@ module Lib
 import           Data.Char             (isDigit)
 import           Data.List.Split
 import           Data.Maybe
-import           Data.String.Utils     (strip)
+import           Data.String.Utils     (replace, strip)
 import           Network.HTTP
 import           Text.HTML.TagSoup
 
@@ -69,10 +69,15 @@ parsePanel tags = foldr fill defaultDefinition $ zip3 tags (tail tags) (tail $ t
             getDefId tag = read (fromAttrib "data-defid" tag1) :: Int
             getText tag = strip . innerText $ [tag]
 
+
+-- Need to do this so that paragraphs will be within a same TagText
+preprocessRawSource :: String -> String
+preprocessRawSource src = replace "<br>" "" src
+
 extractDefinitions :: String -> [Definition]
 extractDefinitions src = removeEmpty records
   where
-    panels = splitDefPanels $ removeCloseTags $ parseTags src
+    panels = splitDefPanels $ removeCloseTags $ parseTags $ preprocessRawSource $ src
     records = map parsePanel panels
     removeEmpty = filter (not . null . word)
 
