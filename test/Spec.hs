@@ -9,11 +9,12 @@ test1 = TestCase (do src <- readFile "test/data/apple.html"
 
 firstAppleDefinition = Definition { defid = "1582300"
                                   , word = "apple"
-                                  , meaning = "\nThe alternative to the orange.\n"
-                                  , example = "\nToday, I do not wish to consume an apple.  I shall seek alternative fruits.\n"
+                                  , meaning = "The alternative to the orange."
+                                  , example = "Today, I do not wish to consume an apple.  I shall seek alternative fruits."
                                   , author = "Armand Banana"
                                   , up = 6359
                                   , down = 1030
+                                  , date = "January 09, 2006"
                                   }
 
 test2 = TestCase (do src <- readFile "test/data/apple.html"
