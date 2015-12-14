@@ -5,6 +5,7 @@ module Lib
     , extractDefinitions
     , Definition (..)
     , defaultDefinition
+    , extractNextPageUrlFromSource
     ) where
 
 import           Data.Char             (isDigit)
@@ -80,6 +81,16 @@ extractDefinitions src = removeEmpty records
     panels = splitDefPanels $ removeCloseTags $ parseTags $ preprocessRawSource $ src
     records = map parsePanel panels
     removeEmpty = filter (not . null . word)
+
+extractNextPageUrl:: [Tag String] -> Maybe String
+extractNextPageUrl tags = case linkTag of
+  [] -> Nothing
+  tag:_ -> Just $ fromAttrib "href" tag
+  where
+    linkTag = filter (matchAttribute "rel" "next") tags
+
+extractNextPageUrlFromSource :: String -> Maybe String
+extractNextPageUrlFromSource = extractNextPageUrl . parseTags
 
 insertDefinition :: IConnection conn => conn -> Definition -> IO ()
 insertDefinition conn def = do

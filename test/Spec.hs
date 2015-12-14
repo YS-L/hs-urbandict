@@ -1,3 +1,4 @@
+import           Data.Maybe
 import           Lib
 import           Test.HUnit
 
@@ -21,8 +22,22 @@ test2 = TestCase (do src <- readFile "test/data/apple.html"
                      let firstDef = head $ extractDefinitions src
                      assertEqual "First def wrong" firstAppleDefinition firstDef)
 
+testPaginate = TestCase (do src <- readFile "test/data/main.html"
+                            let url = extractNextPageUrlFromSource src
+                            assertEqual "Failed to extract next page url"
+                                        (Just "http://www.urbandictionary.com/?page=2")
+                                        url
+                        )
+
+testPaginateLast = TestCase (do src <- readFile "test/data/last.html"
+                                let url = extractNextPageUrlFromSource src
+                                assertEqual "Should not have extracted next page URL"
+                                            (Nothing) url)
+
 tests = TestList [ test1
                  , test2
+                 , testPaginate
+                 , testPaginateLast
                  ]
 
 main :: IO Counts
