@@ -159,6 +159,7 @@ runHomePage = do
   insertDefinitionsAllSimple records
   return ()
 
+processPage :: String -> IO ([Definition], Maybe String)
 processPage url = do
   src <- openURL url
   let records = extractDefinitions src
@@ -166,6 +167,7 @@ processPage url = do
   insertDefinitionsAllSimple records
   return $ (records, nextUrlSuffix)
 
+crawlFromUrl :: String -> String -> IO ()
 crawlFromUrl urlRoot url = do
   putStrLn $ "Crawling, now at " ++ url
   (records, nextUrlSuffix) <- processPage url
@@ -176,7 +178,8 @@ crawlFromUrl urlRoot url = do
     Just suffix -> crawlFromUrl (urlRoot) (urlRoot ++ suffix)
     Nothing -> putStrLn $ "No more next page. Bye"
 
-crawFromMainPage = do
+crawlFromMainPage :: IO ()
+crawlFromMainPage = do
   crawlFromUrl homeURL homeURL
 
-someFunc = crawFromMainPage
+someFunc = crawlFromMainPage
