@@ -22,6 +22,7 @@ test2 = TestCase (do src <- readFile "test/data/apple.html"
                      let firstDef = head $ extractDefinitions src
                      assertEqual "First def wrong" firstAppleDefinition firstDef)
 
+-- Note however that in live site only suffix is extracted
 testPaginate = TestCase (do src <- readFile "test/data/main.html"
                             let url = extractNextPageUrlFromSource src
                             assertEqual "Failed to extract next page url"

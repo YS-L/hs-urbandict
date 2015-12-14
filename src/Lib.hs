@@ -8,6 +8,7 @@ module Lib
     , extractNextPageUrlFromSource
     ) where
 
+import           Control.Concurrent    (threadDelay)
 import           Data.Char             (isDigit)
 import           Data.List.Split
 import           Data.Maybe
@@ -139,6 +140,14 @@ homeURL = "http://www.urbandictionary.com"
 openURL :: String -> IO (String)
 openURL x = getResponseBody =<< simpleHTTP (getRequest x)
 
+runDummy :: IO ()
+runDummy = do
+  createDatabase
+  src <- readFile "test/data/apple.html"
+  let records = extractDefinitions src
+  insertDefinitionsAllSimple records
+  return ()
+
 runHomePage :: IO ()
 runHomePage = do
   createDatabase
@@ -150,12 +159,24 @@ runHomePage = do
   insertDefinitionsAllSimple records
   return ()
 
-runDummy :: IO ()
-runDummy = do
-  createDatabase
-  src <- readFile "test/data/apple.html"
+processPage url = do
+  src <- openURL url
   let records = extractDefinitions src
+  let nextUrlSuffix = extractNextPageUrlFromSource src
   insertDefinitionsAllSimple records
-  return ()
+  return $ (records, nextUrlSuffix)
 
-someFunc = runHomePage
+crawlFromUrl urlRoot url = do
+  putStrLn $ "Crawling, now at " ++ url
+  (records, nextUrlSuffix) <- processPage url
+  putStrLn $ "Got these: " ++ (show records)
+  putStrLn $ "Trying to rest for a while..."
+  threadDelay $ 5000000
+  case nextUrlSuffix of
+    Just suffix -> crawlFromUrl (urlRoot) (urlRoot ++ suffix)
+    Nothing -> putStrLn $ "No more next page. Bye"
+
+crawFromMainPage = do
+  crawlFromUrl homeURL homeURL
+
+someFunc = crawFromMainPage
