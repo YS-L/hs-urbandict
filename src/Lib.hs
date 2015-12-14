@@ -81,6 +81,7 @@ extractDefinitions src = removeEmpty records
     records = map parsePanel panels
     removeEmpty = filter (not . null . word)
 
+insertDefinition :: IConnection conn => conn -> Definition -> IO ()
 insertDefinition conn def = do
   let query = "INSERT OR IGNORE INTO urbandictionary VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
   run conn query [ toSql $ defid def
@@ -94,14 +95,18 @@ insertDefinition conn def = do
                  ]
   commit conn
 
+insertDefinitionAll :: IConnection conn => conn -> [Definition] -> IO ()
 insertDefinitionAll conn defs = mapM_ (insertDefinition conn) defs
 
+insertDefinitionsAllSimple :: [Definition] -> IO ()
 insertDefinitionsAllSimple defs = do
   conn <- connectSqlite3 dbName
   insertDefinitionAll conn defs
 
+dbName :: String
 dbName = "data.db"
 
+createDatabase :: IO ()
 createDatabase = do
   conn <- connectSqlite3 dbName
   run conn "CREATE TABLE IF NOT EXISTS urbandictionary\
@@ -117,10 +122,13 @@ createDatabase = do
   commit conn
   disconnect conn
 
+homeURL :: String
 homeURL = "http://www.urbandictionary.com"
 
+openURL :: String -> IO (String)
 openURL x = getResponseBody =<< simpleHTTP (getRequest x)
 
+runHomePage :: IO ()
 runHomePage = do
   createDatabase
   putStrLn $ "Retrieving definitions from " ++ homeURL ++ "..."
@@ -131,6 +139,7 @@ runHomePage = do
   insertDefinitionsAllSimple records
   return ()
 
+runDummy :: IO ()
 runDummy = do
   createDatabase
   src <- readFile "test/data/apple.html"
