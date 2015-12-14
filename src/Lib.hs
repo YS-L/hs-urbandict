@@ -96,6 +96,10 @@ insertDefinition conn def = do
 
 insertDefinitionAll conn defs = mapM_ (insertDefinition conn) defs
 
+insertDefinitionsAllSimple defs = do
+  conn <- connectSqlite3 dbName
+  insertDefinitionAll conn defs
+
 dbName = "data.db"
 
 createDatabase = do
@@ -113,22 +117,25 @@ createDatabase = do
   commit conn
   disconnect conn
 
---someFunc :: IO ()
---someFunc = putStrLn "Hello World"
+homeURL = "http://www.urbandictionary.com"
 
--- someFunc = createDatabase "test.db"
+openURL x = getResponseBody =<< simpleHTTP (getRequest x)
 
-{-
-someFunc = do
-  conn <- connectSqlite3 "test.db"
-  insertDefinition conn defaultDefinition
+runHomePage = do
+  createDatabase
+  putStrLn $ "Retrieving definitions from " ++ homeURL ++ "..."
+  src <- openURL homeURL
+  let records = extractDefinitions src
+  putStrLn $ "Retrieved " ++ show (length records) ++ " definitions"
+  putStrLn $ "Newest: " ++ show (head records)
+  insertDefinitionsAllSimple records
   return ()
--}
 
-someFunc = do
+runDummy = do
   createDatabase
   src <- readFile "test/data/apple.html"
   let records = extractDefinitions src
-  conn <- connectSqlite3 dbName
-  insertDefinitionAll conn records
+  insertDefinitionsAllSimple records
   return ()
+
+someFunc = runHomePage
