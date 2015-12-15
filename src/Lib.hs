@@ -74,7 +74,6 @@ parsePanel tags = foldr fill defaultDefinition $ zip3 tags (tail tags) (tail $ t
             getDefId tag = read (fromAttrib "data-defid" tag1) :: Int
             getText tag = strip . innerText $ [tag]
 
-
 -- Need to do this so that paragraphs will be within a same TagText
 preprocessRawSource :: String -> String
 preprocessRawSource src = replace "<br>" "" src
@@ -117,7 +116,7 @@ validateDefinition def = case (anyFieldsEmpty def, exampleInvalid def) of
 
 insertDefinition :: IConnection conn => conn -> Definition -> IO ()
 insertDefinition conn def = do
-  let query = "INSERT OR IGNORE INTO urbandictionary VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+  let query = "INSERT OR REPLACE INTO urbandictionary VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
   run conn query [ toSql $ defid def
                  , toSql $ word def
                  , toSql $ meaning def
@@ -191,6 +190,7 @@ processPage url = do
 
 crawlFromUrl :: String -> String -> IO ()
 crawlFromUrl urlRoot url = do
+  createDatabase
   putStrLn $ "Crawling, now at " ++ url
   (records, nextUrlSuffix) <- processPage url
   putStrLn $ "Got these: " ++ (show records)
