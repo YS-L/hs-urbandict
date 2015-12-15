@@ -35,10 +35,45 @@ testPaginateLast = TestCase (do src <- readFile "test/data/last.html"
                                 assertEqual "Should not have extracted next page URL"
                                             (Nothing) url)
 
+
+invalidExampleDefinition = Definition { defid = 123
+                                      , word = "apple"
+                                      , meaning = "Delicious fruit"
+                                      , example = "I totally like orange"
+                                      , author = "Dr. Dre"
+                                      , up = 1337
+                                      , down = 666
+                                      , date = "February 31, 2337"
+                                      }
+
+emptyFieldDefinition = Definition { defid = -1
+                                  , word = "apple"
+                                  , meaning = "Delicious fruit"
+                                  , example = ""
+                                  , author = "Dr. Dre"
+                                  , up = 1337
+                                  , down = -1
+                                  , date = "February 31, 2337"
+                                  }
+
+testValidate1 = TestCase (do case validateDefinition invalidExampleDefinition of
+                              ContainsEmptyField -> assertFailure "Should be InvalidExample, not ContainsEmptyField"
+                              Valid -> assertFailure "Should be InvalidExample, not Valid"
+                              InvalidExample -> return ()
+                        )
+
+testValidate2 = TestCase (do case validateDefinition emptyFieldDefinition of
+                              ContainsEmptyField -> return ()
+                              Valid -> assertFailure "Should be ContainsEmptyField, not Valid"
+                              InvalidExample -> assertFailure "Should be ContainsEmptyField, not InvalidExample"
+                        )
+
 tests = TestList [ test1
                  , test2
                  , testPaginate
                  , testPaginateLast
+                 , testValidate1
+                 , testValidate2
                  ]
 
 main :: IO Counts

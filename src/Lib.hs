@@ -6,10 +6,13 @@ module Lib
     , Definition (..)
     , defaultDefinition
     , extractNextPageUrlFromSource
+    , validateDefinition
+    , ValidationResult (..)
     ) where
 
 import           Control.Concurrent    (threadDelay)
 import           Data.Char             (isDigit)
+import           Data.List             (isInfixOf)
 import           Data.List.Split
 import           Data.Maybe
 import           Data.String.Utils     (replace, strip)
@@ -92,6 +95,25 @@ extractNextPageUrl tags = case linkTag of
 
 extractNextPageUrlFromSource :: String -> Maybe String
 extractNextPageUrlFromSource = extractNextPageUrl . parseTags
+
+data ValidationResult = Valid | ContainsEmptyField | InvalidExample
+
+validateDefinition :: Definition -> ValidationResult
+validateDefinition def = case (anyFieldsEmpty def, exampleInvalid def) of
+  (True, _) -> ContainsEmptyField
+  (_, True) -> InvalidExample
+  (_, _) -> Valid
+  where
+    anyFieldsEmpty def = (  (defid $ empty) == (defid $ def)
+                         || (word $ empty) == (word $ def)
+                         || (meaning $ empty) == (meaning $ def)
+                         || (example $ empty) == (example $ def)
+                         || (author $ empty) == (author $ def)
+                         || (up $ empty) == (up $ def)
+                         || (down $ empty) == (down $ def)
+                         || (date $ empty) == (date $ def) )
+      where empty = defaultDefinition
+    exampleInvalid def = not $ isInfixOf (word $ def) (example $ def)
 
 insertDefinition :: IConnection conn => conn -> Definition -> IO ()
 insertDefinition conn def = do
