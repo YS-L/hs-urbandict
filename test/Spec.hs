@@ -68,12 +68,20 @@ testValidate2 = TestCase (do case validateDefinition emptyFieldDefinition of
                               InvalidExample -> assertFailure "Should be ContainsEmptyField, not InvalidExample"
                         )
 
+testExtractDefinitionPageUrls = TestCase (do src <- readFile "test/data/browse.html"
+                                             let urls = extractDefinitionPageUrls src
+                                             assertEqual "extractDefinitionPageUrls failed"
+                                                         ["/define.php?term=Aakash"]
+                                                         urls
+                                         )
+
 tests = TestList [ test1
                  , test2
                  , testPaginate
                  , testPaginateLast
                  , testValidate1
                  , testValidate2
+                 , testExtractDefinitionPageUrls
                  ]
 
 main :: IO Counts

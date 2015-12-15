@@ -8,11 +8,13 @@ module Lib
     , extractNextPageUrlFromSource
     , validateDefinition
     , ValidationResult (..)
+    , extractDefinitionPageUrls
     ) where
 
 import           Control.Concurrent    (threadDelay)
+import           Control.Monad
 import           Data.Char             (isDigit)
-import           Data.List             (isInfixOf)
+import           Data.List             (isInfixOf, isPrefixOf)
 import           Data.List.Split
 import           Data.Maybe
 import           Data.String.Utils     (replace, strip)
@@ -95,6 +97,15 @@ extractNextPageUrl tags = case linkTag of
 extractNextPageUrlFromSource :: String -> Maybe String
 extractNextPageUrlFromSource = extractNextPageUrl . parseTags
 
+extractDefinitionPageUrls :: String -> [String]
+extractDefinitionPageUrls src = retrieveLinks $ parseTags src
+  where
+    retrieveLinks tags = map (fromAttrib "href") defTags
+      where
+        linkTags = filter (isTagOpenName "a") tags
+        defTags = filter (\t -> isPrefixOf "/define.php?term=" (fromAttrib "href" t)) linkTags
+        --defTags = linkTags
+
 data ValidationResult = Valid | ContainsEmptyField | InvalidExample
 
 validateDefinition :: Definition -> ValidationResult
@@ -158,6 +169,9 @@ createDatabase = do
 homeURL :: String
 homeURL = "http://www.urbandictionary.com"
 
+alphabetURL :: String -> String
+alphabetURL alphabet = homeURL ++ "/browse.php?character=" ++ alphabet
+
 openURL :: String -> IO (String)
 openURL x = getResponseBody =<< simpleHTTP (getRequest x)
 
@@ -180,28 +194,48 @@ runHomePage = do
   insertDefinitionsAllSimple records
   return ()
 
-processPage :: String -> IO ([Definition], Maybe String)
-processPage url = do
+processDefinitionPage :: String -> IO ([Definition], Maybe String)
+processDefinitionPage url = do
   src <- openURL url
   let records = extractDefinitions src
   let nextUrlSuffix = extractNextPageUrlFromSource src
   insertDefinitionsAllSimple records
   return $ (records, nextUrlSuffix)
 
-crawlFromUrl :: String -> String -> IO ()
-crawlFromUrl urlRoot url = do
+crawlFromDefinitionPage :: String -> String -> IO ()
+crawlFromDefinitionPage urlRoot url = do
   createDatabase
-  putStrLn $ "Crawling, now at " ++ url
-  (records, nextUrlSuffix) <- processPage url
+  putStrLn $ "Crawling at definition page, now at " ++ url
+  (records, nextUrlSuffix) <- processDefinitionPage url
   putStrLn $ "Got these: " ++ (show records)
   putStrLn $ "Trying to rest for a while..."
   threadDelay $ 5000000
   case nextUrlSuffix of
-    Just suffix -> crawlFromUrl (urlRoot) (urlRoot ++ suffix)
+    Just suffix -> crawlFromDefinitionPage (urlRoot) (urlRoot ++ suffix)
+    Nothing -> putStrLn $ "No more next page. Bye"
+
+crawlFromBrowsePage :: String -> String -> IO ()
+crawlFromBrowsePage urlRoot url = do
+  createDatabase
+  putStrLn $ "Crawling at browse page, now at " ++ url
+  src <- openURL url
+  let suffixes = extractDefinitionPageUrls src
+  let definitionUrls = map (\s -> urlRoot ++ s) suffixes
+  zipWithM_ crawlFromDefinitionPage (replicate (length suffixes) urlRoot) definitionUrls
+  threadDelay $ 5000000
+  let nextUrlSuffix = extractNextPageUrlFromSource src
+  case nextUrlSuffix of
+    Just suffix -> crawlFromBrowsePage (urlRoot) (urlRoot ++ suffix)
     Nothing -> putStrLn $ "No more next page. Bye"
 
 crawlFromMainPage :: IO ()
 crawlFromMainPage = do
-  crawlFromUrl homeURL homeURL
+  crawlFromDefinitionPage homeURL homeURL
 
-someFunc = crawlFromMainPage
+crawlFromAlphabet :: String -> IO ()
+crawlFromAlphabet alphabet = do
+  let url = alphabetURL alphabet
+  crawlFromBrowsePage homeURL url
+
+--someFunc = crawlFromMainPage
+someFunc = crawlFromAlphabet "A"
