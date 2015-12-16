@@ -14,7 +14,7 @@ module Lib
 import           Control.Concurrent    (threadDelay)
 import           Control.Monad
 import           Data.Char             (isDigit)
-import           Data.List             (isInfixOf, isPrefixOf)
+import           Data.List             (intercalate, isInfixOf, isPrefixOf)
 import           Data.List.Split
 import           Data.Maybe
 import           Data.String.Utils     (replace, strip)
@@ -240,8 +240,33 @@ crawlFromAlphabet alphabet = do
   let url = alphabetURL alphabet
   crawlFromBrowsePage homeURL url
 
+-- TODO: Space, redirection (case sensitivity query term)
 buildSearchUrl :: String -> String
 buildSearchUrl w = homeURL ++ "/define.php?term=" ++ w
+
+prettyPrint :: Definition -> String
+prettyPrint def = intercalate "\n" makeLines
+  where
+    makeLines = [ "\nW O R D"
+                , "-------\n"
+                , word def
+                , "\nM E A N I N G"
+                , "-------------\n"
+                , meaning def
+                , "\nE X A M P L E"
+                , "-------------\n"
+                , example def
+                , "\nA U T H O R"
+                , "-----------\n"
+                , author def
+                , "\nV O T E S"
+                , "---------\n"
+                , "Up: " ++ show (up def) ++ " Down: " ++ show (down def)
+                , "\nD A T E"
+                , "-------\n"
+                , date def
+                , ""
+                ]
 
 data Flag
   = Define String
@@ -280,7 +305,7 @@ main = do
         putStrLn $ "Looking up the word [" ++ w ++ "]..."
         src <- openURL (buildSearchUrl w)
         let records = extractDefinitions src
-        putStrLn $ show records
+        putStrLn $ prettyPrint $ head records
       Crawl s -> do
         case s of
           "home" -> do
