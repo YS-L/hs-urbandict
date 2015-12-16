@@ -19,6 +19,9 @@ import           Data.List.Split
 import           Data.Maybe
 import           Data.String.Utils     (replace, strip)
 import           Network.HTTP
+import           System.Console.GetOpt
+import           System.Environment
+import           System.Exit
 import           Text.HTML.TagSoup
 
 import           Database.HDBC
@@ -237,5 +240,57 @@ crawlFromAlphabet alphabet = do
   let url = alphabetURL alphabet
   crawlFromBrowsePage homeURL url
 
+buildSearchUrl :: String -> String
+buildSearchUrl w = homeURL ++ "/define.php?term=" ++ w
+
+data Flag
+  = Define String
+  | Crawl String
+  | Help
+  deriving Show
+
+options :: [OptDescr Flag]
+options =
+  [ Option ['d'] ["define"] (ReqArg Define "WORD") "Look up the definition of a word"
+  , Option ['c'] ["crawl"]  (ReqArg Crawl "START") "Crawler mode"
+  , Option ['h'] ["help"]   (NoArg Help) "Display help"
+  ]
+
+getUsageInfo :: String
+getUsageInfo = usageInfo header options
+  where header = "Usage: hs-urbandict-exe [OPTION...]"
+
+compilerOpts :: [String] -> IO ([Flag], [String])
+compilerOpts argv =
+  case getOpt Permute options argv of
+    (o,n,[]  ) -> return (o,n)
+    (_,_,errs) -> ioError (userError (concat errs ++ getUsageInfo))
+
+main :: IO ()
+main = do
+  (os, ns) <- getArgs >>= compilerOpts
+  --putStrLn $ "Options: " ++ show os
+  --putStrLn $ "Non-options: " ++ show ns
+  forM_ os $ \opt -> do
+    case opt of
+      Help -> do
+        putStrLn $ getUsageInfo
+        exitWith ExitSuccess
+      Define w -> do
+        putStrLn $ "Looking up the word [" ++ w ++ "]..."
+        src <- openURL (buildSearchUrl w)
+        let records = extractDefinitions src
+        putStrLn $ show records
+      Crawl s -> do
+        case s of
+          "home" -> do
+            putStrLn $ "Crawling from main page"
+            crawlFromMainPage
+          _ -> do
+            putStrLn $ "Crawling from alphabet [" ++ s ++ "]..."
+            crawlFromAlphabet s
+  return ()
+
 --someFunc = crawlFromMainPage
-someFunc = crawlFromAlphabet "A"
+--someFunc = crawlFromAlphabet "A"
+someFunc = main
