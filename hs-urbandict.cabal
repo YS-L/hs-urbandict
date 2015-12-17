@@ -23,6 +23,8 @@ library
                      , tagsoup
                      , HDBC
                      , HDBC-sqlite3
+                     , bytestring
+                     , http-conduit
   default-language:    Haskell2010
 
 executable hs-urbandict-exe

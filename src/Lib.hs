@@ -13,12 +13,14 @@ module Lib
 
 import           Control.Concurrent    (threadDelay)
 import           Control.Monad
+import           Data.ByteString.Char8 (unpack)
+import           Data.ByteString.Lazy  (toStrict)
 import           Data.Char             (isDigit)
 import           Data.List             (intercalate, isInfixOf, isPrefixOf)
 import           Data.List.Split
 import           Data.Maybe
 import           Data.String.Utils     (replace, strip)
-import           Network.HTTP
+import           Network.HTTP.Conduit  (simpleHttp)
 import           System.Console.GetOpt
 import           System.Environment
 import           System.Exit
@@ -176,7 +178,7 @@ alphabetURL :: String -> String
 alphabetURL alphabet = homeURL ++ "/browse.php?character=" ++ alphabet
 
 openURL :: String -> IO (String)
-openURL x = getResponseBody =<< simpleHTTP (getRequest x)
+openURL x = liftM (unpack . toStrict) (simpleHttp x)
 
 runDummy :: IO ()
 runDummy = do
@@ -240,7 +242,7 @@ crawlFromAlphabet alphabet = do
   let url = alphabetURL alphabet
   crawlFromBrowsePage homeURL url
 
--- TODO: Space, redirection (case sensitivity query term)
+-- TODO: Space
 buildSearchUrl :: String -> String
 buildSearchUrl w = homeURL ++ "/define.php?term=" ++ w
 
