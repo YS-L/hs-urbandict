@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-y LANGUAGE TemplateHaskell #-}
 
 module Lib
     ( someFunc
@@ -25,6 +25,8 @@ import           System.Console.GetOpt
 import           System.Environment
 import           System.Exit
 import           Text.HTML.TagSoup
+
+--import           Debug.Trace
 
 import           Database.HDBC
 import           Database.HDBC.Sqlite3
@@ -82,8 +84,9 @@ parsePanel tags = foldr fill defaultDefinition $ zip3 tags (tail tags) (tail $ t
             getText tag = strip . innerText $ [tag]
 
 -- Need to do this so that paragraphs will be within a same TagText
+-- Note: For some reason, <br/> only appears on live input
 preprocessRawSource :: String -> String
-preprocessRawSource src = replace "<br>" "" src
+preprocessRawSource src = ((replace "<br>" "\n") . (replace "<br/>" "\n")) src
 
 extractDefinitions :: String -> [Definition]
 extractDefinitions src = removeEmpty records
@@ -308,6 +311,7 @@ main = do
         src <- openURL (buildSearchUrl w)
         let records = extractDefinitions src
         putStrLn $ prettyPrint $ head records
+        putStrLn $ show (head records)
       Crawl s -> do
         case s of
           "home" -> do
