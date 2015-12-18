@@ -66,9 +66,9 @@ splitDefPanels :: [Tag String] -> [[Tag String]]
 splitDefPanels = tail . split (keepDelimsL $ whenElt isDefPanel)
 
 parsePanel :: [Tag String] -> Definition
-parsePanel tags = foldr fill defaultDefinition $ zip3 tags (tail tags) (tail $ tail tags)
+parsePanel tags = foldr fill defaultDefinition $ zip tags (tail tags)
   where
-    fill (tag1, tag2, tag3) def
+    fill (tag1, tag2) def
       | matchAttribute "class" "def-panel" tag1 = def { defid = getDefId tag1 }
       | matchAttribute "class" "word" tag1 = def { word = getText tag2 }
       | matchAttribute "class" "meaning" tag1 = def { meaning = getText tag2 }
