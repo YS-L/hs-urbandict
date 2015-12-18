@@ -15,8 +15,9 @@ import           Control.Concurrent    (threadDelay)
 import           Control.Monad
 import           Data.ByteString.Char8 (unpack)
 import           Data.ByteString.Lazy  (toStrict)
-import           Data.Char             (isDigit)
-import           Data.List             (intercalate, isInfixOf, isPrefixOf)
+import           Data.Char             (isDigit, toUpper)
+import           Data.List             (intercalate, isInfixOf, isPrefixOf,
+                                        replicate)
 import           Data.List.Split
 import           Data.Maybe
 import           Data.String.Utils     (replace, strip)
@@ -26,7 +27,7 @@ import           System.Environment
 import           System.Exit
 import           Text.HTML.TagSoup
 
---import           Debug.Trace
+import           Debug.Trace
 
 import           Database.HDBC
 import           Database.HDBC.Sqlite3
@@ -63,6 +64,7 @@ removeCloseTags = filter (not . isTagClose)
 splitDefPanels :: [Tag String] -> [[Tag String]]
 splitDefPanels = tail . split (keepDelimsL $ whenElt isDefPanel)
 
+-- TODO: Breaks when there are cross references in content
 parsePanel :: [Tag String] -> Definition
 parsePanel tags = foldr fill defaultDefinition $ zip3 tags (tail tags) (tail $ tail tags)
   where
@@ -245,12 +247,11 @@ crawlFromAlphabet alphabet = do
   let url = alphabetURL alphabet
   crawlFromBrowsePage homeURL url
 
--- TODO: Space
 buildSearchUrl :: String -> String
 buildSearchUrl w = homeURL ++ "/define.php?term=" ++ w
 
 prettyPrint :: Definition -> String
-prettyPrint def = intercalate "\n" makeLines
+prettyPrint def = intercalate "\n" $ map format makeLines
   where
     makeLines = [ "\nW O R D"
                 , "-------\n"
@@ -272,6 +273,16 @@ prettyPrint def = intercalate "\n" makeLines
                 , date def
                 , ""
                 ]
+    wrapline s = intercalate "\n" $ collect (words s) [] 0
+      where
+        collect (x:xs) ys c = case (length x) + c > 65 of
+          False -> collect xs (x:ys) (length x + c)
+          otherwise ->  (finalize ys) : (collect xs [x] (length x))
+        collect [] ys _ = [finalize ys]
+        finalize ys = intercalate " " (reverse ys)
+    format s = intercalate "\n" $ map wrapline paragraphs
+      where
+        paragraphs = splitOn "\n" (replace "\r" "" s)
 
 data Flag
   = Define String
