@@ -26,6 +26,7 @@ import           System.Console.GetOpt
 import           System.Environment
 import           System.Exit
 import           Text.HTML.TagSoup
+import           Text.Regex
 
 import           Debug.Trace
 
@@ -64,7 +65,6 @@ removeCloseTags = filter (not . isTagClose)
 splitDefPanels :: [Tag String] -> [[Tag String]]
 splitDefPanels = tail . split (keepDelimsL $ whenElt isDefPanel)
 
--- TODO: Breaks when there are cross references in content
 parsePanel :: [Tag String] -> Definition
 parsePanel tags = foldr fill defaultDefinition $ zip3 tags (tail tags) (tail $ tail tags)
   where
@@ -73,8 +73,8 @@ parsePanel tags = foldr fill defaultDefinition $ zip3 tags (tail tags) (tail $ t
       | matchAttribute "class" "word" tag1 = def { word = getText tag2 }
       | matchAttribute "class" "meaning" tag1 = def { meaning = getText tag2 }
       | matchAttribute "class" "example" tag1 = def { example = getText tag2 }
-      | matchAttribute "class" "author" tag1 = def { author = getText tag2
-                                                   , date = getText tag3 }
+      | matchAttribute "class" "author" tag1 = def { author = head $ authorDate tag2
+                                                   , date = last $ authorDate tag2}
       | matchAttribute "class" "count" tag1 = fillVotes tag2 def
       | otherwise = def
           where
@@ -84,11 +84,20 @@ parsePanel tags = foldr fill defaultDefinition $ zip3 tags (tail tags) (tail $ t
               where val = read (innerText [tag]) :: Int
             getDefId tag = read (fromAttrib "data-defid" tag1) :: Int
             getText tag = strip . innerText $ [tag]
+            authorDate tag = splitOn "\n" (getText tag)
 
 -- Need to do this so that paragraphs will be within a same TagText
 -- Note: For some reason, <br/> only appears on live input
 preprocessRawSource :: String -> String
-preprocessRawSource src = ((replace "<br>" "\n") . (replace "<br/>" "\n")) src
+preprocessRawSource src = (removeLinkTagsDumblyFromSource . (replace "<br>" "\n") . (replace "<br/>" "\n")) src
+
+-- Remove links (but not the author one, ugh) in order to handle
+-- cross-referencing. And yes, I used regex to process HTML. Sorry.
+removeLinkTagsDumblyFromSource :: String -> String
+removeLinkTagsDumblyFromSource src = replaced
+  where
+    replaced = f $ (replace "</a>" "" src)
+    f s = subRegex (mkRegex "<a href=\"/define.php.*\">") s ""
 
 extractDefinitions :: String -> [Definition]
 extractDefinitions src = removeEmpty records

@@ -25,6 +25,7 @@ library
                      , HDBC-sqlite3
                      , bytestring
                      , http-conduit
+                     , regex-compat
   default-language:    Haskell2010
 
 executable hs-urbandict-exe
