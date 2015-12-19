@@ -10,8 +10,8 @@ import           System.Exit
 
 import           Lib
 
-prettyPrint :: Definition -> String
-prettyPrint def = intercalate "\n" $ map format makeLines
+prettyPrint :: Definition -> String -> String
+prettyPrint def url = intercalate "\n" $ map format makeLines
   where
     makeLines = [ "\nW O R D"
                 , "-------\n"
@@ -31,6 +31,9 @@ prettyPrint def = intercalate "\n" $ map format makeLines
                 , "\nD A T E"
                 , "-------\n"
                 , date def
+                , "\nS O U R C E"
+                , "-----------\n"
+                , url
                 , ""
                 ]
     wrapline s = intercalate "\n" $ collect (words s) [] 0
@@ -70,9 +73,10 @@ compilerOpts argv =
 mainSearch :: String -> IO ()
 mainSearch w = do
   putStrLn $ "Looking up the word [" ++ w ++ "]..."
-  src <- openURL $ buildSearchUrl w
+  let url = buildSearchUrl w
+  src <- openURL $ url
   let records = extractDefinitions src
-  putStrLn $ prettyPrint $ head records
+  putStrLn $ prettyPrint (head records) url
   --putStrLn $ show records
 
 mainToday :: IO ()
@@ -81,7 +85,7 @@ mainToday = do
   let records = extractDefinitions src
   let top = head records
   putStrLn $ "Today you learned the word [" ++ word top ++ "]..."
-  putStrLn $ prettyPrint top
+  putStrLn $ prettyPrint top homeURL
 
 exitWithHelp :: IO ()
 exitWithHelp  = do

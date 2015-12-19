@@ -1,4 +1,4 @@
-[Urban dictionary](http://www.urbandictionary.com/) in the command line, implemented in Haskell.
+[Urban Dictionary](http://www.urbandictionary.com/) in the command line, implemented in Haskell.
 
 Build
 -----
@@ -60,6 +60,11 @@ Run
   -------
 
   July 21, 2012
+
+  S O U R C E
+  -----------
+
+  http://www.urbandictionary.com/define.php?term=yolo
   ```
 
 * Show today's top definition on the front page:
