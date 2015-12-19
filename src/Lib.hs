@@ -295,20 +295,18 @@ prettyPrint def = intercalate "\n" $ map format makeLines
 
 data Flag
   = Define String
-  | Crawl String
   | Help
-  deriving Show
+  deriving (Show, Eq)
 
 options :: [OptDescr Flag]
 options =
   [ Option ['d'] ["define"] (ReqArg Define "WORD") "Look up the definition of a word"
-  , Option ['c'] ["crawl"]  (ReqArg Crawl "START") "Crawler mode"
   , Option ['h'] ["help"]   (NoArg Help) "Display help"
   ]
 
 getUsageInfo :: String
 getUsageInfo = usageInfo header options
-  where header = "Usage: hs-urbandict-exe [OPTION...]"
+  where header = "Usage: urbandict [OPTION...]"
 
 compilerOpts :: [String] -> IO ([Flag], [String])
 compilerOpts argv =
@@ -316,32 +314,35 @@ compilerOpts argv =
     (o,n,[]  ) -> return (o,n)
     (_,_,errs) -> ioError (userError (concat errs ++ getUsageInfo))
 
+mainSearch :: String -> IO ()
+mainSearch w = do
+  putStrLn $ "Looking up the word [" ++ w ++ "]..."
+  src <- openURL (buildSearchUrl w)
+  let records = extractDefinitions src
+  putStrLn $ prettyPrint $ head records
+  --putStrLn $ show (head records)
+
+exitWithHelp :: IO ()
+exitWithHelp  = do
+  putStrLn $ getUsageInfo
+  exitWith ExitSuccess
+
 main :: IO ()
 main = do
   (os, ns) <- getArgs >>= compilerOpts
-  --putStrLn $ "Options: " ++ show os
-  --putStrLn $ "Non-options: " ++ show ns
-  forM_ os $ \opt -> do
-    case opt of
-      Help -> do
-        putStrLn $ getUsageInfo
-        exitWith ExitSuccess
-      Define w -> do
-        putStrLn $ "Looking up the word [" ++ w ++ "]..."
-        src <- openURL (buildSearchUrl w)
-        let records = extractDefinitions src
-        putStrLn $ prettyPrint $ head records
-        putStrLn $ show (head records)
-      Crawl s -> do
-        case s of
-          "home" -> do
-            putStrLn $ "Crawling from main page"
-            crawlFromMainPage
-          _ -> do
-            putStrLn $ "Crawling from alphabet [" ++ s ++ "]..."
-            crawlFromAlphabet s
+  -- putStrLn $ "Options: " ++ show os
+  -- putStrLn $ "Non-options: " ++ show ns
+  if Help `elem` os
+    then exitWithHelp
+    else
+      forM_ os $ \opt -> do
+        case opt of
+          Define w -> do
+            mainSearch w
+            exitWith ExitSuccess
+  if not . null $ ns
+    then mainSearch $ head ns
+    else exitWithHelp
   return ()
 
---someFunc = crawlFromMainPage
---someFunc = crawlFromAlphabet "A"
 someFunc = main
