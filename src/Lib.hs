@@ -120,7 +120,6 @@ extractDefinitionPageUrls src = retrieveLinks $ parseTags src
       where
         linkTags = filter (isTagOpenName "a") tags
         defTags = filter (\t -> isPrefixOf "/define.php?term=" (fromAttrib "href" t)) linkTags
-        --defTags = linkTags
 
 data ValidationResult = Valid | ContainsEmptyField | InvalidExample
 
@@ -190,14 +189,6 @@ alphabetURL alphabet = homeURL ++ "/browse.php?character=" ++ alphabet
 
 openURL :: String -> IO (String)
 openURL x = liftM (unpack . toStrict) (simpleHttp x)
-
-runDummy :: IO ()
-runDummy = do
-  createDatabase
-  src <- readFile "test/data/apple.html"
-  let records = extractDefinitions src
-  insertDefinitionsAllSimple records
-  return ()
 
 runHomePage :: IO ()
 runHomePage = do

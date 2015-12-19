@@ -35,6 +35,7 @@ executable urbandict
   build-depends:       base
                      , hs-urbandict
                      , MissingH
+                     , split
   default-language:    Haskell2010
 
 test-suite hs-urbandict-test
