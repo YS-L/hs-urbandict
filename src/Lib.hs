@@ -10,6 +10,7 @@ module Lib
     , extractDefinitionPageUrls
     , buildSearchUrl
     , openURL
+    , homeURL
     ) where
 
 import           Control.Concurrent    (threadDelay)

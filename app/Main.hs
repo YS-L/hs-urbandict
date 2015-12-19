@@ -46,18 +46,20 @@ prettyPrint def = intercalate "\n" $ map format makeLines
 
 data Flag
   = Define String
+  | Today
   | Help
   deriving (Show, Eq)
 
 options :: [OptDescr Flag]
 options =
-  [ Option ['d'] ["define"] (ReqArg Define "WORD") "Look up the definition of a word"
+  [ Option [] ["define"] (ReqArg Define "WORD") "Look up the definition of a word"
+  , Option [] ["today"]  (NoArg Today) "Look up today's top definition"
   , Option ['h'] ["help"]   (NoArg Help) "Display help"
   ]
 
 getUsageInfo :: String
 getUsageInfo = usageInfo header options
-  where header = "Usage: urbandict [OPTION...]"
+  where header = "Usage: urbandict [OPTION...] [WORD]"
 
 compilerOpts :: [String] -> IO ([Flag], [String])
 compilerOpts argv =
@@ -68,10 +70,18 @@ compilerOpts argv =
 mainSearch :: String -> IO ()
 mainSearch w = do
   putStrLn $ "Looking up the word [" ++ w ++ "]..."
-  src <- openURL (buildSearchUrl w)
+  src <- openURL $ buildSearchUrl w
   let records = extractDefinitions src
   putStrLn $ prettyPrint $ head records
-  --putStrLn $ show (head records)
+  --putStrLn $ show records
+
+mainToday :: IO ()
+mainToday = do
+  src <- openURL $ homeURL
+  let records = extractDefinitions src
+  let top = head records
+  putStrLn $ "Today you learned the word [" ++ word top ++ "]..."
+  putStrLn $ prettyPrint top
 
 exitWithHelp :: IO ()
 exitWithHelp  = do
@@ -90,6 +100,9 @@ main = do
         case opt of
           Define w -> do
             mainSearch w
+            exitWith ExitSuccess
+          Today -> do
+            mainToday
             exitWith ExitSuccess
   if not . null $ ns
     then mainSearch $ head ns
