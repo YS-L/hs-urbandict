@@ -1,18 +1,19 @@
-[Urban Dictionary](http://www.urbandictionary.com/) in the command line, implemented in Haskell.
+[Urban Dictionary](http://www.urbandictionary.com/) in the command line,
+implemented in Haskell.
 
 Build
 -----
 To build and install using [stack](https://github.com/commercialhaskell/stack),
-run:
+run the following commands in the terminal:
 
 ```
-$ stack build
-$ stack test
-$ stack install
+stack build
+stack test
+stack install
 ```
 
-Run
----
+Usage
+-----
 
 * Look up and show the top definition for a word:
 
@@ -72,8 +73,3 @@ Run
   ```
   $ urbandict --today
   ```
-
-Misc
-----
-This is just another Hello World program. Teh codez may be n00b.
-
